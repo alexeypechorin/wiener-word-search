@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <section class="site-section py-lg">
+        <div class="container">
+            <div class="row blog-entries">
+                <div class="col-md-4" style="padding:0px"></div>
+                <div class="col-md-6" style="padding:0px">
+                    <div class="sidebar-box search-form-wrap">
+                        <form action="/" class="search-form" method="get">
+                            {% csrf_token %}
+                            <input type="text" id="s" name="s" value="{{ search }}"
+                                   placeholder="Search..." >
+                            <button type="submit">搜索</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-2" style="padding:0px"></div>
+            </div>
+            <div class="row blog-entries">
+                <div class="col-md-5" style="padding:0px"></div>
+                <div class="col-md-2" style="padding:0px">
+
+                    <!-- END sidebar-box -->
+
+
+
+                    {% for img in img_list %}
+                        <div class="post-entry">
+                            <img src="{{ img }}" alt="Image placeholder" class="img-fluid">
+                        </div>
+                        <form action="{% url 'info' %}" method="post" target="_blank">
+                            {% csrf_token %}
+                            <input type='hidden' class="form-control" id='img' name="img" value="{{ img }}"/>
+                            <div class="row">
+                                <div class="col-md-6 form-group">
+                                    <input type="submit" value="查看大图" class="btn btn-primary">
+                                </div>
+                            </div>
+                        </form>
+                    {% endfor %}
+                </div>
+                <div class="col-md-5" style="padding:0px"></div>
+
+            </div>
+            <div class="row blog-entries">
+                <div class="col-md-2" style="padding:0px"></div>
+                <div class="col-md-8" style="padding:0px">
+                    <span style="color: red">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ msg }}</span>
+                </div>
+                <div class="col-md-2" style="padding:0px"></div>
+            </div>
+
+            <!-- END sidebar -->
+        </div>
+    </section>
+
+
+{% endblock %}

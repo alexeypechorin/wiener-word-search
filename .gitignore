@@ -1,0 +1,9 @@
+.idea/
+db.sqlite3
+extra_apps/
+venv/
+static/images/
+static/js/editor/
+user/migrations/__pycache__/
+picture_word/__pycache__/
+user/__pycache__/
