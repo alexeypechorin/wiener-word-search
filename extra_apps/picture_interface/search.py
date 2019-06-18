@@ -230,16 +230,16 @@ def getImg(str):
 
         for result_obj_path, result_obj in result_objs_grouped.items():
             img = cv2.imread("extra_apps/picture_interface/{0}".format(result_obj_path))
-            img_list.append(show_bboxes_with_text(img, result_obj))
+            img_list.append((show_bboxes_with_text(img, result_obj), result_obj))
 
     image_src=[]
-    for img in img_list:
+    for img, result_obj in img_list:
         # print(type(img))
         sio = BytesIO()
         img.save(sio, format='png')
         imgdata = base64.encodebytes(sio.getvalue()).decode()
         img_src = 'data:image/png;base64,' + imgdata
-        image_src.append(img_src)
+        image_src.append((img_src, result_obj[0]['img_path']))
     return image_src
 
 def getImgSrc(str):

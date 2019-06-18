@@ -26,9 +26,14 @@
 
 
 
-                    {% for img in img_list %}
-                        <div class="post-entry">
+                    {% for img, metadata_obj in img_list %}
+
+                        <div class="post-entry" style="width:100%; font-size:80%; text-align:center;">
                             <img src="{{ img }}" alt="Image placeholder" class="img-fluid">
+                            <a href="https://tau-primo.hosted.exlibrisgroup.com/primo-explore/search?query=any,contains,wiener%20tau%20archive%20online%20{{ metadata_obj }}&tab=default_tab&search_scope=TAU_Blended&vid=TAU&lang=iw_IL&offset=0">
+                                {{ metadata_obj }} in Wiener TAU archive
+                            </a>
+
                         </div>
                         <form action="{% url 'info' %}" method="post" target="_blank">
                             {% csrf_token %}
