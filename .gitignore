@@ -1,6 +1,9 @@
 .idea/
 db.sqlite3
-extra_apps/
+extra_apps/picture_interface/.idea
+extra_apps/picture_interface/__pycache__
+extra_apps/picture_interface/00302388
+extra_apps/picture_interface/data
 venv/
 static/images/
 static/js/editor/
