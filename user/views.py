@@ -3,20 +3,26 @@ from django.views.generic.base import View
 # Create your views here.
 from picture_interface.search import get_img_src
 
+
 class IndexView(View):
     def get(self, request):
-        s = request.GET.get('s', "")
-        img_list=[]
-        msg=''
-        if s:
+
+        model_data = request.session.get('model_data')
+
+        query_string = request.GET.get('s', "")
+        img_list = []
+        msg = ''
+        if query_string:
             try:
-                img_list=get_img_src(s)
+                img_list, model_data = get_img_src(query_string, model_data)
+                request.session['model_data'] = model_data
+
             except Exception as e:
-                msg=str(e)+'NOT EXISTING'
+                msg = 'Couldn\'t get images due to an error: ' + str(e)
         return render(request, "index.html", {
-            "search":s,
+            "search": query_string,
             "img_list": img_list,
-            "msg":msg,
+            "msg": msg,
         })
 
 

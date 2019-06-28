@@ -248,7 +248,7 @@ def load_model_data(Wx_file_path, candidates_file_path, hub_matrix_file_path, me
     return Wx, candidates, hub_matrix, mean_x
 
 
-def get_img(queries_str):
+def get_img(queries_str, model_data):
     model_data_folder = 'extra_apps/picture_interface/model_data_deu'
     candidates_file_path = os.path.join(model_data_folder, 'candidates_all.npy')
     Wx_file_path = os.path.join(model_data_folder, 'Wx.npy')
@@ -258,13 +258,26 @@ def get_img(queries_str):
     words_file_path = os.path.join(model_data_folder, 'words.json')
     vocab_strings_file_path = os.path.join(model_data_folder, 'vocab_strings.json')
     unigrams_file_path = os.path.join(model_data_folder, 'unigrams.json')
-    # query_results_directory_path = 'results_user_input'
 
-    Wx, candidates, hub_matrix, mean_x = load_model_data(Wx_file_path, candidates_file_path,
-                                                         hub_matrix_file_path, mean_x_file_path)
-    unigrams, vocab_strings, vocabulary, words = load_vocabulary_data(unigrams_file_path, vocab_strings_file_path,
-                                                                      vocabulary_file_path, words_file_path)
+    if not model_data:
+        Wx, candidates, hub_matrix, mean_x = load_model_data(Wx_file_path, candidates_file_path,
+                                                             hub_matrix_file_path, mean_x_file_path)
+        unigrams, vocab_strings, vocabulary, words = load_vocabulary_data(unigrams_file_path, vocab_strings_file_path,
+                                                                          vocabulary_file_path, words_file_path)
 
+        model_data = {'Wx': Wx,
+                        'candidates': candidates,
+                        'hub_matrix': hub_matrix,
+                        'mean_x': mean_x,
+                        'unigrams': unigrams,
+                        'vocab_strings': vocab_strings,
+                        'vocabulary': vocabulary,
+                        'words': words
+                      }
+    else:
+        Wx, candidates, hub_matrix, mean_x, unigrams, vocab_strings, vocabulary, words = \
+        model_data['Wx'], model_data['candidates'], model_data['hub_matrix'], model_data['mean_x'], model_data[
+            'unigrams'], model_data['vocab_strings'], model_data['vocabulary'], model_data['words']
 
     # get top 20 results for each query
     queries = queries_str.split()
@@ -300,12 +313,12 @@ def get_img(queries_str):
         imgdata = base64.encodebytes(sio.getvalue()).decode()
         img_src = 'data:image/png;base64,' + imgdata
         image_src.append((img_src, result_obj[0]['img_path']))
-    return image_src
+    return image_src, model_data
 
 
-def get_img_src(str):
-    img_list = get_img(str)
-    return img_list
+def get_img_src(query_str, model_data):
+    img_list, model_data = get_img(query_str, model_data)
+    return img_list, model_data
 
 # if __name__ == '__main__':
 #     img_list=getImgSrc('hat')
