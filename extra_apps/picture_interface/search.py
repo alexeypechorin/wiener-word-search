@@ -1,4 +1,6 @@
 # encoding=utf-8
+import time
+
 from io import BytesIO
 from picture_word.settings import BASE_DIR
 import base64
@@ -138,11 +140,52 @@ def build_phoc_descriptor(words, phoc_unigrams, unigram_levels,
     return phocs
 
 
-def run_query(queries, candidate_phocs, unigrams, unigram_levels=[1, 2, 4, 8, 16]):
+def run_query(queries, candidates, Wx, mean_x, hub_matrix, unigrams, unigram_levels=[1, 2, 4, 8], num_nn=20):
+    # assumes that candidates are already projected and normalized
+    tic = time.process_time()
     query_phocs = build_phoc_descriptor(queries, unigram_levels=unigram_levels, phoc_unigrams=unigrams)
+    toc = time.process_time()
 
-    dist = cdist(query_phocs, candidate_phocs, 'cosine')
+    print('building phoc descriptor time:', toc - tic)
+
+    tic = time.process_time()
+    # project and normalize
+    projected_query = np.matmul(query_phocs - np.transpose(mean_x).reshape(1, -1), Wx)
+    query_norms = np.linalg.norm(projected_query, axis=1)
+    query_norms = np.reshape(query_norms, (-1, 1))
+    projected_query = projected_query / query_norms
+    toc = time.process_time()
+
+    print('projecting time:', toc - tic)
+
+    tic = time.process_time()
+    # find distance from projected query to candidates using cosine distance
+    dist = 1 - np.matmul(projected_query, np.transpose(candidates))
+    toc = time.process_time()
+
+    print('main distance time:', toc - tic)
+
+    tic = time.process_time()
+    # find avg distance to nearest neighbors for query
+    sorted_distances = np.sort(dist, axis=-1)
+    trunc_distances = sorted_distances[:, :num_nn]
+    avg_nn_dist = np.sum(trunc_distances, axis=1) / num_nn
+    toc = time.process_time()
+
+    print('nearest neighbor time:', toc - tic)
+
+    tic = time.process_time()
+    dist = 2 * dist - avg_nn_dist - np.transpose(hub_matrix)
+    toc = time.process_time()
+
+    print('final distance calculation:', toc - tic)
+
+    tic = time.process_time()
+    # sort the final results
     sorted_results = np.argsort(dist, axis=1)
+    toc = time.process_time()
+
+    print('sorting time:', toc - tic)
 
     return sorted_results
 
@@ -173,53 +216,63 @@ def show_clean_results(queries, results, vocab_strings, vocabulary, words, k=20)
     return top_k
 
 
-def get_img(queries_str):
-    print('loading vocabulary, words...')
-    with open(os.path.join(BASE_DIR, 'extra_apps', 'picture_interface', 'data', 'vocabulary.json'), 'r') as f:
+def load_vocabulary_data(unigrams_file_path, vocab_strings_file_path, vocabulary_file_path, words_file_path):
+    print('Loading vocabulary, words...')
+    tic_vocab = time.process_time()
+    with open(vocabulary_file_path, 'r') as f:
         vocabulary = json.load(f)
-
-    with open(os.path.join(BASE_DIR, 'extra_apps', 'picture_interface', 'data', 'words.json'), 'r') as f:
+    with open(words_file_path, 'r') as f:
         words = json.load(f)
-
-    with open(os.path.join(BASE_DIR, 'extra_apps', 'picture_interface', 'data', 'vocab_strings.json'), 'r') as f:
+    with open(vocab_strings_file_path, 'r') as f:
         vocab_strings = json.load(f)
+    with open(unigrams_file_path, 'r') as f:
+        unigrams = json.load(f)
+    toc_vocab = time.process_time()
+    print(toc_vocab - tic_vocab, 'seconds...')
+    return unigrams, vocab_strings, vocabulary, words
 
-    unigrams = []
 
-    # load unigrams if they exist, else create them.
-    if os.path.exists(os.path.join(BASE_DIR, 'extra_apps', 'picture_interface', 'data', 'unigrams.json')):
-        with open(os.path.join(BASE_DIR, 'extra_apps', 'picture_interface', 'data', 'unigrams.json'), 'r') as f:
-            unigrams = json.load(f)
-    else:
-        # create unigrams for all vocabulary
-        unigrams = [chr(i) for i in range(ord('a'), ord('z') + 1)]
-        unigrams += [chr(i) for i in range(ord('0'), ord('9') + 1)]
-        unigrams += [chr(i) for i in range(ord('À'), ord('ü'))]
-        unigrams = sorted(unigrams)
+def load_model_data(Wx_file_path, candidates_file_path, hub_matrix_file_path, mean_x_file_path):
+    print('Loading all candidates')
+    tic_cands = time.process_time()
+    candidates = np.load(candidates_file_path)
+    toc_cands = time.process_time()
+    print(toc_cands - tic_cands, 'seconds...')
+    tic_hub = time.process_time()
+    print('Loading Wx, mean_x, and hub_matrix...')
+    Wx = np.load(Wx_file_path)
+    mean_x = np.load(mean_x_file_path)
+    hub_matrix = np.load(hub_matrix_file_path)
+    toc_hub = time.process_time()
+    print(toc_hub - tic_hub, 'seconds...')
+    return Wx, candidates, hub_matrix, mean_x
 
-        # save unigrams
-        with open(os.path.join(BASE_DIR, 'extra_apps', 'picture_interface', 'data', 'unigrams.json'), 'w') as f:
-            json.dump(unigrams, f)
 
-    candidates = []
+def get_img(queries_str):
+    model_data_folder = 'model_data_deu'
+    candidates_file_path = os.path.join(model_data_folder, 'candidates_all.npy')
+    Wx_file_path = os.path.join(model_data_folder, 'Wx.npy')
+    mean_x_file_path = os.path.join(model_data_folder, 'mean_x.npy')
+    hub_matrix_file_path = os.path.join(model_data_folder, 'hub.npy')
+    vocabulary_file_path = os.path.join(model_data_folder, 'vocabulary.json')
+    words_file_path = os.path.join(model_data_folder, 'words.json')
+    vocab_strings_file_path = os.path.join(model_data_folder, 'vocab_strings.json')
+    unigrams_file_path = os.path.join(model_data_folder, 'unigrams.json')
+    # query_results_directory_path = 'results_user_input'
 
-    print('building candidates...')
+    Wx, candidates, hub_matrix, mean_x = load_model_data(Wx_file_path, candidates_file_path,
+                                                         hub_matrix_file_path, mean_x_file_path)
+    unigrams, vocab_strings, vocabulary, words = load_vocabulary_data(unigrams_file_path, vocab_strings_file_path,
+                                                                      vocabulary_file_path, words_file_path)
 
-    if os.path.exists(os.path.join(BASE_DIR, 'extra_apps', 'picture_interface', 'data', 'candidates.npy')):
-        print('loading candidates')
-        candidates = np.load(os.path.join(BASE_DIR, 'extra_apps', 'picture_interface', 'data', 'candidates.npy'))
-    else:
-        # build candidates and save them
-        candidates = build_phoc_descriptor(vocab_strings, phoc_unigrams=unigrams, unigram_levels=[1, 2, 4, 8, 16])
-
-        # save candidates
-        np.save(os.path.join('data', 'candidates.npy'), candidates)
-
-    queries = queries_str.split()
-
-    results = run_query(queries, candidates, unigrams)
 
     # get top 20 results for each query
+    queries = queries_str.split()
+    tic = time.process_time()
+    results = run_query(queries, candidates, Wx, mean_x, hub_matrix, unigrams)
+    toc = time.process_time()
+    print(toc - tic, 'seconds...')
+
     clean_results = show_clean_results(queries, results, vocab_strings, vocabulary, words, k=3)
 
     # just check that each one is properly showing the right thing
