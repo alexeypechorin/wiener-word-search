@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic.base import View
 # Create your views here.
-from picture_interface.search import getImgSrc
+from picture_interface.search import get_img_src
 
 class IndexView(View):
     def get(self, request):
@@ -10,7 +10,7 @@ class IndexView(View):
         msg=''
         if s:
             try:
-                img_list=getImgSrc(s)
+                img_list=get_img_src(s)
             except Exception as e:
                 msg=str(e)+'NOT EXISTING'
         return render(request, "index.html", {
