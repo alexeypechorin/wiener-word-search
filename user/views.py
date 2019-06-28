@@ -3,11 +3,12 @@ from django.views.generic.base import View
 # Create your views here.
 from picture_interface.search import get_img_src
 
+from django.core.cache import cache
+
 
 class IndexView(View):
     def get(self, request):
-
-        model_data = request.session.get('model_data')
+        model_data = cache.get('model_data')
 
         query_string = request.GET.get('s', "")
         img_list = []
@@ -15,8 +16,7 @@ class IndexView(View):
         if query_string:
             try:
                 img_list, model_data = get_img_src(query_string, model_data)
-                request.session['model_data'] = model_data
-
+                cache.set('model_data', model_data)
             except Exception as e:
                 msg = 'Couldn\'t get images due to an error: ' + str(e)
         return render(request, "index.html", {
