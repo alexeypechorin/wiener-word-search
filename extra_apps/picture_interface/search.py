@@ -249,7 +249,7 @@ def load_model_data(Wx_file_path, candidates_file_path, hub_matrix_file_path, me
 
 
 def get_img(queries_str):
-    model_data_folder = 'model_data_deu'
+    model_data_folder = 'extra_apps/picture_interface/model_data_deu'
     candidates_file_path = os.path.join(model_data_folder, 'candidates_all.npy')
     Wx_file_path = os.path.join(model_data_folder, 'Wx.npy')
     mean_x_file_path = os.path.join(model_data_folder, 'mean_x.npy')
