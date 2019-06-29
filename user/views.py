@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic.base import View
 # Create your views here.
-from picture_interface.search import get_img_src
+from picture_interface.search import get_img
 
 from django.core.cache import cache
 
@@ -15,7 +15,7 @@ class IndexView(View):
         msg = ''
         if query_string:
             try:
-                img_list, model_data = get_img_src(query_string, model_data)
+                img_list, model_data = get_img(query_string, model_data)
                 cache.set('model_data', model_data)
             except Exception as e:
                 msg = 'Couldn\'t get images due to an error: ' + str(e)

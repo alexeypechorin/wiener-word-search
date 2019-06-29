@@ -190,7 +190,7 @@ def run_query(queries, candidates, Wx, mean_x, hub_matrix, unigrams, unigram_lev
     return sorted_results
 
 
-def show_clean_results(queries, results, vocab_strings, vocabulary, words, k=20):
+def show_clean_results(queries, results, vocab_strings, vocabulary, words, k=20, max_results_per_query=-1):
     """
     prints out clean table of results
     :param results:
@@ -212,7 +212,8 @@ def show_clean_results(queries, results, vocab_strings, vocabulary, words, k=20)
             indices = vocabulary[result_str]
 
             top_k[queries[row]] += [words[idx] for idx in indices]
-
+        if max_results_per_query != -1:
+            top_k[queries[row]] = top_k[queries[row]][:max_results_per_query]
     return top_k
 
 
@@ -248,7 +249,7 @@ def load_model_data(Wx_file_path, candidates_file_path, hub_matrix_file_path, me
     return Wx, candidates, hub_matrix, mean_x
 
 
-def get_img(queries_str, model_data, quick_search):
+def get_img(queries_str, model_data, quick_search, max_results_per_query_amount=21):
     model_data_folder = 'extra_apps/picture_interface/model_data_deu' + ('_few' if quick_search else '')
     candidates_file_path = os.path.join(model_data_folder, 'candidates_all.npy')
     Wx_file_path = os.path.join(model_data_folder, 'Wx.npy')
@@ -286,7 +287,7 @@ def get_img(queries_str, model_data, quick_search):
     toc = time.process_time()
     print(toc - tic, 'seconds...')
 
-    clean_results = show_clean_results(queries, results, vocab_strings, vocabulary, words, k=3)
+    clean_results = show_clean_results(queries, results, vocab_strings, vocabulary, words, k=3, max_results_per_query=-1)
 
     # just check that each one is properly showing the right thing
     # comment them out if you don't want to see them
@@ -300,6 +301,8 @@ def get_img(queries_str, model_data, quick_search):
             if not result_obj['img_path'] in result_objs_grouped:
                 result_objs_grouped[result_obj['img_path']] = []
             result_objs_grouped[result_obj['img_path']].append(result_obj)
+            if len(result_objs_grouped) >= max_results_per_query_amount:
+                break
 
         for result_obj_path, result_obj in result_objs_grouped.items():
             relative_obj_path = '/'.join(result_obj_path.split('/')[-2:])
@@ -320,11 +323,6 @@ def get_img(queries_str, model_data, quick_search):
         img_src = 'data:image/png;base64,' + imgdata
         image_src.append((img_src, result_obj[0]['rel_img_path']))
     return image_src, model_data
-
-
-def get_img_src(query_str, model_data, quick_search=False):
-    img_list, model_data = get_img(query_str, model_data, quick_search)
-    return img_list, model_data
 
 # if __name__ == '__main__':
 #     img_list=getImgSrc('hat')
