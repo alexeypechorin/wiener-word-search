@@ -249,7 +249,7 @@ def load_model_data(Wx_file_path, candidates_file_path, hub_matrix_file_path, me
 
 
 def get_img(queries_str, model_data, quick_search):
-    model_data_folder = 'extra_apps/picture_interface/model_data_deu' + '_few' if quick_search else ''
+    model_data_folder = 'extra_apps/picture_interface/model_data_deu' + ('_few' if quick_search else '')
     candidates_file_path = os.path.join(model_data_folder, 'candidates_all.npy')
     Wx_file_path = os.path.join(model_data_folder, 'Wx.npy')
     mean_x_file_path = os.path.join(model_data_folder, 'mean_x.npy')
@@ -305,7 +305,11 @@ def get_img(queries_str, model_data, quick_search):
             relative_obj_path = '/'.join(result_obj_path.split('/')[-2:])
             img = cv2.imread("extra_apps/picture_interface/{0}".format(relative_obj_path))
             result_obj[0]['rel_img_path'] = relative_obj_path
-            img_list.append((show_bboxes_with_text(img, result_obj), result_obj))
+            if img is not None:
+                print("Read successfully image from path: ", relative_obj_path)
+                img_list.append((show_bboxes_with_text(img, result_obj), result_obj))
+            else:
+                print("Couldn\'t read image from path: ", relative_obj_path)
 
     image_src = []
     for img, result_obj in img_list:
