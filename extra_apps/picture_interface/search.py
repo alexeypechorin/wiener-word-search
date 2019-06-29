@@ -302,7 +302,9 @@ def get_img(queries_str, model_data):
             result_objs_grouped[result_obj['img_path']].append(result_obj)
 
         for result_obj_path, result_obj in result_objs_grouped.items():
-            img = cv2.imread("extra_apps/picture_interface/{0}".format('/'.join(result_obj_path.split('/')[-2:])))
+            relative_obj_path = '/'.join(result_obj_path.split('/')[-2:])
+            img = cv2.imread("extra_apps/picture_interface/{0}".format(relative_obj_path))
+            result_obj[0]['rel_img_path'] = relative_obj_path
             img_list.append((show_bboxes_with_text(img, result_obj), result_obj))
 
     image_src = []
@@ -312,7 +314,7 @@ def get_img(queries_str, model_data):
         img.save(sio, format='png')
         imgdata = base64.encodebytes(sio.getvalue()).decode()
         img_src = 'data:image/png;base64,' + imgdata
-        image_src.append((img_src, result_obj[0]['img_path']))
+        image_src.append((img_src, result_obj[0]['rel_img_path']))
     return image_src, model_data
 
 
