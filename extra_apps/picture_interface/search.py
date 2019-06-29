@@ -17,6 +17,8 @@ import importlib
 
 importlib.reload(sys)
 
+model_data = None
+
 
 def correct():
     pass
@@ -196,6 +198,8 @@ def show_clean_results(queries, results, vocab_strings, vocabulary, words, k=20,
     :param results:
     :param vocabulary:
     :param words:
+    :param max_results_per_query:
+    :param k:
     :return: a list containing top k results (more than k if multiple occurrence of some word string)
     """
 
@@ -249,7 +253,7 @@ def load_model_data(Wx_file_path, candidates_file_path, hub_matrix_file_path, me
     return Wx, candidates, hub_matrix, mean_x
 
 
-def get_img(queries_str, model_data, quick_search=False, max_results_per_query_amount=21):
+def get_img(queries_str, quick_search=False, max_results_per_query_amount=12):
     model_data_folder = 'extra_apps/picture_interface/model_data_deu' + ('_few' if quick_search else '')
     candidates_file_path = os.path.join(model_data_folder, 'candidates_all.npy')
     Wx_file_path = os.path.join(model_data_folder, 'Wx.npy')
@@ -259,6 +263,8 @@ def get_img(queries_str, model_data, quick_search=False, max_results_per_query_a
     words_file_path = os.path.join(model_data_folder, 'words.json')
     vocab_strings_file_path = os.path.join(model_data_folder, 'vocab_strings.json')
     unigrams_file_path = os.path.join(model_data_folder, 'unigrams.json')
+
+    global model_data
 
     if not model_data:
         Wx, candidates, hub_matrix, mean_x = load_model_data(Wx_file_path, candidates_file_path,
@@ -280,7 +286,6 @@ def get_img(queries_str, model_data, quick_search=False, max_results_per_query_a
         model_data['Wx'], model_data['candidates'], model_data['hub_matrix'], model_data['mean_x'], model_data[
             'unigrams'], model_data['vocab_strings'], model_data['vocabulary'], model_data['words']
 
-    # get top 20 results for each query
     queries = queries_str.split()
     tic = time.process_time()
     results = run_query(queries, candidates, Wx, mean_x, hub_matrix, unigrams)
@@ -322,7 +327,7 @@ def get_img(queries_str, model_data, quick_search=False, max_results_per_query_a
         imgdata = base64.encodebytes(sio.getvalue()).decode()
         img_src = 'data:image/png;base64,' + imgdata
         image_src.append((img_src, result_obj[0]['rel_img_path']))
-    return image_src, model_data
+    return image_src
 
 # if __name__ == '__main__':
-#     img_list=getImgSrc('hat')
+#     img_list=get_img('hat')

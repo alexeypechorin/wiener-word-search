@@ -1,22 +1,21 @@
+import time
+
 from django.shortcuts import render
 from django.views.generic.base import View
 # Create your views here.
 from picture_interface.search import get_img
 
-from django.core.cache import cache
-
 
 class IndexView(View):
+
     def get(self, request):
-        model_data = cache.get('model_data')
 
         query_string = request.GET.get('s', "")
         img_list = []
         msg = ''
         if query_string:
             try:
-                img_list, model_data = get_img(query_string, model_data)
-                cache.set('model_data', model_data)
+                img_list = get_img(query_string)
             except Exception as e:
                 msg = 'Couldn\'t get images due to an error: ' + str(e)
         return render(request, "index.html", {
